@@ -1,4 +1,4 @@
-import React, {Component, useState} from 'react';
+import React, {Component, useState, useRef} from 'react';
 import {
   StyleSheet,
   View,
@@ -6,6 +6,7 @@ import {
   ImageBackground,
   Animated,
   TouchableOpacity,
+  PanResponder,
 } from 'react-native';
 import bgImage from './assets/wall.png';
 import mrT from './assets/MsT.png';
@@ -20,11 +21,38 @@ const App = () => {
   const [toggle2, setToggle2] = useState(1);
   const value1 = useState(new Animated.ValueXY({x: 0, y: 5}))[0];
   const value2 = useState(new Animated.ValueXY({x: 0, y: -10}))[0];
+  const pan = useRef(new Animated.ValueXY()).current;
+
+  // Move third icon on swipe
+  const panResponder = useState(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: () => true,
+      onPanResponderGrant: () => {
+        pan.setOffset({
+          x: pan.x._value,
+          y: pan.y._value,
+        });
+      },
+      onPanResponderMove: Animated.event(
+        [
+          null,
+          {
+            dx: pan.x,
+            dy: pan.y,
+          },
+        ],
+        {useNativeDriver: false},
+      ),
+      onPanResponderRelease: () => {
+        pan.flattenOffset();
+      },
+    }),
+  )[0];
 
   // Move first icon
   function moveIcon1() {
     // Gain velocity
-    initialDuration = initialDuration + 5;
+    initialDuration = initialDuration - 10;
 
     // Identify relocation
     if (toggle1 === 0) {
@@ -47,7 +75,7 @@ const App = () => {
   // Move second icon
   function moveIcon2() {
     // Gain velocity
-    initialDuration = initialDuration + 5;
+    initialDuration = initialDuration - 10;
 
     // Identify relocation
     if (toggle2 === 1) {
@@ -80,7 +108,12 @@ const App = () => {
             <ImageBackground style={styles.secondIcon} source={mrB} />
           </Animated.View>
         </TouchableOpacity>
-        <ImageBackground style={styles.thirdIcon} source={mrC} />
+        <Animated.View
+          style={[styles.thirdIcon, pan.getLayout()]}
+          {...panResponder.panHandlers}
+        >
+          <ImageBackground style={styles.thirdIcon} source={mrC} />
+        </Animated.View>
         <View style={styles.topRigidBody}></View>
         <View style={styles.bottomRigidBody}></View>
         <View style={styles.leftRigidBody}></View>
@@ -91,8 +124,6 @@ const App = () => {
     </ImageBackground>
   );
 };
-
-export default App;
 
 const styles = StyleSheet.create({
   container: {
@@ -114,8 +145,8 @@ const styles = StyleSheet.create({
   },
   thirdIcon: {
     position: 'absolute',
-    top: '81%',
-    alignSelf: 'center',
+    top: 620,
+    left: 170,
     width: 50,
     height: 50,
   },
@@ -160,3 +191,5 @@ const styles = StyleSheet.create({
     backgroundColor: '#4266f5',
   },
 });
+
+export default App;
